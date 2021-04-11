@@ -6,14 +6,15 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use walkdir::WalkDir;
 
 static SEPARATOR: &str = "-----";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Info {
-    pub metadata: Vec<String>,
+    pub metadata: Option<Vec<String>>,
     pub filename: String,
-    pub logs: Vec<String>,
+    pub logs: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,8 +41,8 @@ impl Info {
     pub fn new(filename: String, logs: Vec<String>, metadata: Vec<String>) -> Info {
         Info {
             filename,
-            logs,
-            metadata,
+            logs: Some(logs),
+            metadata: Some(metadata),
         }
     }
 
@@ -52,21 +53,36 @@ impl Info {
         let file = OpenOptions::new().append(true).open(path)?;
         let mut buffered_file: BufWriter<File> = BufWriter::new(file.try_clone()?);
 
+        let metadata = {
+            match info.metadata {
+                Some(list) => list,
+                None => Vec::new(),
+            }
+        };
+
+        let logs = {
+            match info.logs {
+                Some(list) => list,
+                None => Vec::new(),
+            }
+        };
+
         if !flag {
-            for log in info.metadata {
+            for log in metadata {
                 buffered_file.write_fmt(format_args!("{}\n", log))?;
             }
             buffered_file.write_fmt(format_args!("{}\n", SEPARATOR))?;
         }
-        for log in info.logs {
+
+        for log in logs {
             buffered_file.write_fmt(format_args!("{}\n", log))?;
         }
 
         return Ok(Response::new("ok".to_string(), true));
     }
 
-    pub fn get(info: Self) -> Result<Info, ApiError> {
-        let path: String = format!("./logs/{}.log", &info.filename);
+    pub fn get(filename: String) -> Result<Info, ApiError> {
+        let path: String = format!("./logs/{}.log", &filename);
         Info::check_file(path.as_str())?;
 
         let file = OpenOptions::new().read(true).open(path)?;
@@ -89,7 +105,27 @@ impl Info {
             }
         }
         metadata.remove(metadata.len() - 1);
-        let result = Info::new(info.filename, logs, metadata);
+        let result = Info::new(filename, logs, metadata);
         return Ok(result);
+    }
+
+    pub fn get_filenames() -> Result<Vec<String>, ApiError> {
+        let mut files: Vec<String> = Vec::new();
+
+        for entry in WalkDir::new("./logs") {
+            let name: String = match entry {
+                Ok(directory) => {
+                    let aux = directory.file_name().to_str();
+                    if let Some(aux_name) = aux {
+                        aux_name.to_string()
+                    } else {
+                        "Error".to_string()
+                    }
+                }
+                Err(_) => "Error".to_string(),
+            };
+            files.push(name);
+        }
+        return Ok(files);
     }
 }

@@ -9,12 +9,19 @@ async fn post_logs(info: web::Json<Info>) -> Result<HttpResponse, ApiError> {
 }
 
 #[get("/api/logs")]
-async fn get_logs(info: web::Json<Info>) -> Result<HttpResponse, ApiError> {
-    let info = Info::get(info.into_inner())?;
+async fn get_logs(web::Query(info): web::Query<Info>) -> Result<HttpResponse, ApiError> {
+    let info = Info::get(info.filename)?;
+    return Ok(HttpResponse::Ok().json(info));
+}
+
+#[get("/api/filenames")]
+async fn get_filenames() -> Result<HttpResponse, ApiError> {
+    let info = Info::get_filenames()?;
     return Ok(HttpResponse::Ok().json(info));
 }
 
 pub fn init_info_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(post_logs);
     cfg.service(get_logs);
+    cfg.service(get_filenames);
 }
