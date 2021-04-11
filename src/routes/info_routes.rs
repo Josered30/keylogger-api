@@ -1,6 +1,6 @@
 use crate::errors::ApiError;
 use crate::models::Info;
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{delete, get, post, web, HttpResponse};
 
 #[post("/api/logs")]
 async fn post_logs(info: web::Json<Info>) -> Result<HttpResponse, ApiError> {
@@ -10,7 +10,7 @@ async fn post_logs(info: web::Json<Info>) -> Result<HttpResponse, ApiError> {
 
 #[get("/api/logs")]
 async fn get_logs(web::Query(info): web::Query<Info>) -> Result<HttpResponse, ApiError> {
-    let info = Info::get(info.filename)?;
+    let info = web::block(move || Info::get(info.filename)).await?;
     return Ok(HttpResponse::Ok().json(info));
 }
 
@@ -20,8 +20,15 @@ async fn get_filenames() -> Result<HttpResponse, ApiError> {
     return Ok(HttpResponse::Ok().json(info));
 }
 
+#[delete("/api/logs")]
+async fn delete_log(web::Query(info): web::Query<Info>) -> Result<HttpResponse, ApiError> {
+    let result = Info::delete_log(info.filename)?;
+    return Ok(HttpResponse::Ok().json(result));
+}
+
 pub fn init_info_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(post_logs);
     cfg.service(get_logs);
     cfg.service(get_filenames);
+    cfg.service(delete_log);
 }

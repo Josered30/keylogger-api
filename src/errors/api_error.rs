@@ -3,7 +3,7 @@ use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
 use serde::Deserialize;
 use serde_json::json;
-use std::{fmt, io::Error};
+use std::{fmt, io};
 
 #[derive(Debug, Deserialize)]
 pub struct ApiError {
@@ -35,8 +35,8 @@ impl From<BlockingError<ApiError>> for ApiError {
     }
 }
 
-impl From<Error> for ApiError {
-    fn from(error: Error) -> Self {
+impl From<io::Error> for ApiError {
+    fn from(error: io::Error) -> Self {
        return ApiError::new(500, format!("IO error {}", error));
     }
 }

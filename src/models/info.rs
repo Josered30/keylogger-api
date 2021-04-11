@@ -128,4 +128,9 @@ impl Info {
         }
         return Ok(files);
     }
+
+    pub fn delete_log(filename: String) -> Result<Response, ApiError> {
+        std::fs::remove_file(format!("./logs/{}.log", &filename))?;
+        return Ok(Response::new("deleted".to_string(), true));
+    }
 }
