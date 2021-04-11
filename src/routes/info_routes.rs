@@ -1,5 +1,7 @@
-use crate::errors::ApiError;
+use std::error::Error;
+
 use crate::models::Info;
+use crate::{errors::ApiError, main};
 use actix_web::{delete, get, post, web, HttpResponse};
 
 #[post("/api/logs")]
