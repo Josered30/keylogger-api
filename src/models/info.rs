@@ -83,7 +83,10 @@ impl Info {
 
     pub fn get(filename: String) -> Result<Info, ApiError> {
         let path: String = format!("./logs/{}.log", &filename);
-        Info::check_file(path.as_str())?;
+
+        if !Path::new(&path).exists() {
+            return Err(ApiError::new(404, "Not found".to_string()));
+        }
 
         let file = OpenOptions::new().read(true).open(path)?;
         let buffered_file: BufReader<File> = BufReader::new(file);
