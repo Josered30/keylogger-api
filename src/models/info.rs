@@ -136,4 +136,27 @@ impl Info {
         std::fs::remove_file(format!("./logs/{}.log", &filename))?;
         return Ok(Response::new("deleted".to_string(), true));
     }
+
+    pub fn delete_all() -> Result<Response, ApiError> {
+
+        let mut count: i64 = 0;
+
+        for entry in WalkDir::new("./logs") {
+            match entry {
+                Ok(directory) => {
+                    let aux = directory.file_name().to_str();
+                    if let Some(aux_name) = aux {
+                        match std::fs::remove_file(format!("./logs/{}", aux_name)) {
+                            Ok(()) => count+=1,
+                            Err(_) => ()
+                        }
+                    } 
+                }
+                Err(_) => ()
+            }
+        }
+
+        let message: String = format!("deleted {} files", count);
+        return Ok(Response::new(message, true));
+    }
 }

@@ -1,7 +1,5 @@
-use std::error::Error;
-
 use crate::models::Info;
-use crate::{errors::ApiError, main};
+use crate::{errors::ApiError};
 use actix_web::{delete, get, post, web, HttpResponse};
 
 #[post("/api/logs")]
@@ -28,9 +26,18 @@ async fn delete_log(web::Query(info): web::Query<Info>) -> Result<HttpResponse, 
     return Ok(HttpResponse::Ok().json(result));
 }
 
+
+#[delete("/api/logs/all")]
+async fn delete_all() -> Result<HttpResponse, ApiError> {
+    let result = Info::delete_all()?;
+    return Ok(HttpResponse::Ok().json(result));
+}
+
+
 pub fn init_info_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(post_logs);
     cfg.service(get_logs);
     cfg.service(get_filenames);
     cfg.service(delete_log);
+    cfg.service(delete_all);
 }
